@@ -93,7 +93,7 @@ end
 
 
 @clock = Rubygame::Clock.new
-@clock.target_framerate = 60
+@clock.target_framerate = 30
 @clock.enable_tick_events
 
 @sprites = Rubygame::Sprites::Group.new
