@@ -37,6 +37,7 @@ class Event
 end
 
 @list = []
+@objects = []
 
 Thread.new do
   while true
@@ -55,14 +56,76 @@ Thread.new do
   end
 end
 
-# Wait for an event
-while event = @event_queue.wait
+class Meanie
+  # Turn this object into a sprite
+  include Rubygame::Sprites::Sprite
   
-  # Show the details of the event
-  #p event.inspect
-  @list << Event.new(event)
+  def initialize
+    # Invoking the base class constructor is important and yet easy to forget:
+    super()
+    
+    # @image and @rect are expected by the Rubygame sprite code
+    @image = Rubygame::Surface.load "prova.png"
+    @rect  = @image.make_rect
+    
+    @angle = 2*Math::PI * rand
+  end
   
-  # Stop this program if the user closes the window
-  break if event.is_a? Rubygame::Events::QuitRequested
+  # Animate this object.  "seconds_passed" contains the number of ( real-world)
+  # seconds that have passed since the last time this object was updated and is
+  # therefore useful for working out how far the object should move ( which
+  # should be independent of the frame rate)
+  def update seconds_passed
+    
+    # This example makes the objects orbit around the center of the screen.
+    # The objects make one orbit every 4 seconds
+    @angle = ( @angle + 2*Math::PI / 4 * seconds_passed) % ( 2*Math::PI)
+    
+    @rect.topleft = [ 320 + 100 * Math.sin(@angle),
+                      240 - 100 * Math.cos(@angle)]
+  end
+  
+  def draw on_surface
+    @image.blit on_surface, @rect
+  end
+  
+end
+
+
+@clock = Rubygame::Clock.new
+@clock.target_framerate = 60
+@clock.enable_tick_events
+
+@sprites = Rubygame::Sprites::Group.new
+Rubygame::Sprites::UpdateGroup.extend_object @sprites
+3.times { @sprites << Meanie.new }
+
+@background = Rubygame::Surface.load "background.jpg"
+@background.blit @screen, [0, 0]
+
+should_run = true
+while should_run do
+  
+  seconds_passed = @clock.tick().seconds
+  
+  @event_queue.each do |event|
+    case event
+    when Rubygame::Events::QuitRequested, Rubygame::Events::KeyReleased
+      should_run = false
+    end
+    @list << Event.new(event)
+  end
+  
+  # "undraw" all of the sprites by drawing the background image at their
+  # current location ( before their location has been changed by the animation)
+  @sprites.undraw @screen, @background
+  
+  # Give all of the sprites an opportunity to move themselves to a new location
+  @sprites.update seconds_passed
+  
+  # Draw all of the sprites
+  @sprites.draw @screen
+  
+  @screen.flip
   
 end
