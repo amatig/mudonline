@@ -1,8 +1,11 @@
 #!/usr/bin/ruby
 require "rubygems"
 require "rubygame"
-require "IRC"
 require "singleton"
+require "IRC"
+
+require "game_client"
+require "game_event"
 
 class Game
   include Singleton
@@ -18,25 +21,28 @@ class Game
     @clock = Rubygame::Clock.new
     @clock.target_framerate = 30
     @clock.enable_tick_events
-        
-    @background = Rubygame::Surface.load("background.jpg")
-    @background.blit(@screen, [0, 0])
+    
+    @game_events = []
+    
+    # @background = Rubygame::Surface.load("background.jpg")
+    # @background.blit(@screen, [0, 0])
   end
   
-  def tick
+  def update
     seconds_passed = @clock.tick.seconds
     
     @event_queue.each do |event|
-      p event
+      #p event
       case event
       when Rubygame::Events::QuitRequested
         return false
       when Rubygame::Events::KeyReleased
         return false if event.key == :escape
       end
-      # @list << Event.new(event)
+      @game_events << GameEvent.fromEvent(event)
     end
     
+    puts get_event
     # @sprites.undraw(@screen, @background)
     # @sprites.update(seconds_passed)
     # @sprites.draw(@screen)
@@ -45,46 +51,27 @@ class Game
     return true
   end
   
-end
-
-class IRCConnection
-  
-  # Ridefinizione del metodo loop della lib irc.
-  def IRCConnection.main
-    while (@@quit == 0)
-      do_one_loop { |event| yield event }
-      # tick per aggiorn. gragica e condizione per uscire
-      unless Game.instance.tick
-        Rubygame.quit
-        IRCConnection.quit
+  def get_event
+    temp = nil
+    @game_events.each do |e|
+      if (Time.now.to_i - e.timeout >= 0)
+        temp = e
+        break
       end
     end
+    if temp
+      @game_events.delete(temp)
+      puts temp.inspect
+    end
+    return temp
   end
   
-end
-
-class Client < IRC
-  
-  def initialize(nick, server, port, channels = [], options = {})
-    super(nick, server, port, nil, options)
-    # Callbakcs for the connection.
-    IRCEvent.add_callback("endofmotd") do |event| 
-      channels.each { |chan| add_channel(chan) }
-    end
-    IRCEvent.add_callback("nicknameinuse") do |event| 
-      ch_nick("RubyBot")
-    end
-    IRCEvent.add_callback("privmsg") do |event| 
-      parse(event)
-    end
-    IRCEvent.add_callback("join") do |event| 
-      if @autoops.include?(event.from)
-        op(event.channel, event.from)
-      end
-    end
+  def add_event(event)
+    @game_events << event
   end
   
-  def parse(event)
+  def quit
+    Rubygame.quit
   end
   
 end
@@ -94,7 +81,7 @@ end
 
 if __FILE__ == $0
   begin
-    Client.new("Client", "127.0.0.1", 6667, ["\#Hall"]).connect
+    GameClient.new("Client_#{rand 1000}", "127.0.0.1", 6667, ["\#Hall"]).connect
   rescue Interrupt
   rescue Exception => e
     puts "MainLoop: " + e.message
