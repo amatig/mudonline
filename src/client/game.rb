@@ -11,7 +11,7 @@ class Game
     @screen = Rubygame::Screen.open([640, 480],
                                     0, 
                                     [Rubygame::HWSURFACE, Rubygame::DOUBLEBUF])
-    @screen.title = "Hello Rubygame World!"
+    @screen.title = "Game"
     @event_queue = Rubygame::EventQueue.new
     @event_queue.enable_new_style_events
     
@@ -24,12 +24,15 @@ class Game
   end
   
   def tick
-    seconds_passed = @clock.tick().seconds
+    seconds_passed = @clock.tick.seconds
     
     @event_queue.each do |event|
+      p event
       case event
-      when Rubygame::Events::QuitRequested, Rubygame::Events::KeyReleased
-        
+      when Rubygame::Events::QuitRequested
+        return false
+      when Rubygame::Events::KeyReleased
+        return false if event.key == :escape
       end
       # @list << Event.new(event)
     end
@@ -37,19 +40,24 @@ class Game
     # @sprites.undraw(@screen, @background)
     # @sprites.update(seconds_passed)
     # @sprites.draw(@screen)
-    @screen.flip  
+    @screen.flip
+    
+    return true
   end
   
 end
 
 class IRCConnection
   
+  # Ridefinizione del metodo loop della lib irc.
   def IRCConnection.main
-    while(@@quit == 0)
-      do_one_loop { |event|
-        yield event
-      }
-      Game.instance.tick
+    while (@@quit == 0)
+      do_one_loop { |event| yield event }
+      # tick per aggiorn. gragica e condizione per uscire
+      unless Game.instance.tick
+        Rubygame.quit
+        IRCConnection.quit
+      end
     end
   end
   
@@ -62,7 +70,6 @@ class Client < IRC
     # Callbakcs for the connection.
     IRCEvent.add_callback("endofmotd") do |event| 
       channels.each { |chan| add_channel(chan) }
-      # puts Game.instance
     end
     IRCEvent.add_callback("nicknameinuse") do |event| 
       ch_nick("RubyBot")
