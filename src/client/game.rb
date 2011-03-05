@@ -32,18 +32,24 @@ class Game
     seconds_passed = @clock.tick.seconds
     
     @ev_raw.each do |event|
-      #p event
+      # puts event.inspect
       case event
       when Rubygame::Events::QuitRequested
         return false
       when Rubygame::Events::KeyPressed
         return false if event.key == :escape
+      when Rubygame::Events::MouseMoved
+      when Rubygame::Events::MouseFocusGained
+      when Rubygame::Events::MouseFocusLost
+      when Rubygame::Events::InputFocusGained
+      when Rubygame::Events::InputFocusLost
+      else
         @list_events.add_event(GameEvent.fromEvent(event))
       end
     end
     
-    ev = @list_events.get_event
-    p ev if ev
+    @list_events.get_event if @list_events.have_event?
+    
     # @sprites.undraw(@screen, @background)
     # @sprites.update(seconds_passed)
     # @sprites.draw(@screen)

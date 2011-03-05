@@ -37,7 +37,15 @@ class GameClient < IRC
   end
   
   def parse(event)
-    ListEvents.instance.add_event(GameEvent.fromData("Prova", 0, 0, [0, 0], [], 0))
+    if event.channel != @nick
+      ListEvents.instance.add_event(GameEvent.fromData("Irc", 
+                                                       0, 
+                                                       0, 
+                                                       [0, 0], 
+                                                       event.message, 
+                                                       [], 
+                                                       Time.now.to_i))
+    end
   end
   
 end
