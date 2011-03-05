@@ -43,9 +43,6 @@ class Game
         return false
       when Rubygame::Events::KeyPressed
         return false if event.key == :escape
-        # @player.move(event.key)
-      when Rubygame::Events::KeyReleased
-        # @player.stop
       when Rubygame::Events::MouseMoved
       when Rubygame::Events::MouseFocusGained
       when Rubygame::Events::MouseFocusLost
@@ -60,7 +57,10 @@ class Game
     
     if @list_events.have_event?
       ev = @list_events.get_event
-      p ev
+      if ev.type == :MousePressed
+        # @player.move(ev.pos)
+        # mettere gli eventi di Move al posto di questo
+      end
     end
     
     @sprites.update(seconds_passed)
