@@ -6,6 +6,7 @@ require "IRC"
 
 require "game_client"
 require "game_event"
+require "game_sprite"
 
 class Game
   include Singleton
@@ -24,20 +25,27 @@ class Game
     
     @list_events = ListEvents.instance
     
-    # @background = Rubygame::Surface.load("background.jpg")
-    # @background.blit(@screen, [0, 0])
+    @background = Rubygame::Surface.load("background.jpg")
+    @background.blit(@screen, [0, 0])
+    
+    @sprites = Rubygame::Sprites::Group.new
+    Rubygame::Sprites::UpdateGroup.extend_object(@sprites)
+    @player = GameSprite.new
+    @sprites << @player
   end
   
   def update
     seconds_passed = @clock.tick.seconds
     
     @ev_raw.each do |event|
-      # puts event.inspect
       case event
       when Rubygame::Events::QuitRequested
         return false
       when Rubygame::Events::KeyPressed
         return false if event.key == :escape
+        # @player.move(event.key)
+      when Rubygame::Events::KeyReleased
+        # @player.stop
       when Rubygame::Events::MouseMoved
       when Rubygame::Events::MouseFocusGained
       when Rubygame::Events::MouseFocusLost
@@ -48,11 +56,15 @@ class Game
       end
     end
     
-    @list_events.get_event if @list_events.have_event?
+    @sprites.undraw(@screen, @background)
     
-    # @sprites.undraw(@screen, @background)
-    # @sprites.update(seconds_passed)
-    # @sprites.draw(@screen)
+    if @list_events.have_event?
+      ev = @list_events.get_event
+      p ev
+    end
+    
+    @sprites.update(seconds_passed)
+    @sprites.draw(@screen)
     @screen.flip
     
     return true
