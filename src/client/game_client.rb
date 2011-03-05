@@ -37,8 +37,7 @@ class GameClient < IRC
   end
   
   def parse(event)
-    #puts Thread.current
-    Game.instance.add_event(GameEvent.fromData("Prova", 0, 0, [0, 0], [], 0))
+    ListEvents.instance.add_event(GameEvent.fromData("Prova", 0, 0, [0, 0], [], 0))
   end
   
 end

@@ -36,3 +36,35 @@ class GameEvent
   private_class_method :new
   
 end
+
+class ListEvents
+  include Singleton
+  
+  def initialize
+    @list = []
+    @mutex = Mutex.new
+  end
+  
+  def add_event(game_event)
+    @mutex.synchronize do
+      @list << game_event
+    end
+  end
+  
+  def get_event
+    game_event = nil
+    @mutex.synchronize do
+      @list.each do |e|
+        if (Time.now.to_i - e.timeout >= 0)
+          game_event = e
+          break
+        end
+      end
+      if game_event
+        @list.delete(game_event)
+      end
+    end
+    return game_event
+  end
+  
+end

@@ -15,14 +15,14 @@ class Game
                                     0, 
                                     [Rubygame::HWSURFACE, Rubygame::DOUBLEBUF])
     @screen.title = "Game"
-    @event_queue = Rubygame::EventQueue.new
-    @event_queue.enable_new_style_events
+    @ev_raw = Rubygame::EventQueue.new
+    @ev_raw.enable_new_style_events
     
     @clock = Rubygame::Clock.new
-    @clock.target_framerate = 30
+    @clock.target_framerate = 60
     @clock.enable_tick_events
     
-    @game_events = []
+    @list_events = ListEvents.instance
     
     # @background = Rubygame::Surface.load("background.jpg")
     # @background.blit(@screen, [0, 0])
@@ -31,43 +31,25 @@ class Game
   def update
     seconds_passed = @clock.tick.seconds
     
-    @event_queue.each do |event|
+    @ev_raw.each do |event|
       #p event
       case event
       when Rubygame::Events::QuitRequested
         return false
-      when Rubygame::Events::KeyReleased
+      when Rubygame::Events::KeyPressed
         return false if event.key == :escape
+        @list_events.add_event(GameEvent.fromEvent(event))
       end
-      @game_events << GameEvent.fromEvent(event)
     end
     
-    puts get_event
+    ev = @list_events.get_event
+    p ev if ev
     # @sprites.undraw(@screen, @background)
     # @sprites.update(seconds_passed)
     # @sprites.draw(@screen)
     @screen.flip
     
     return true
-  end
-  
-  def get_event
-    temp = nil
-    @game_events.each do |e|
-      if (Time.now.to_i - e.timeout >= 0)
-        temp = e
-        break
-      end
-    end
-    if temp
-      @game_events.delete(temp)
-      puts temp.inspect
-    end
-    return temp
-  end
-  
-  def add_event(event)
-    @game_events << event
   end
   
   def quit
