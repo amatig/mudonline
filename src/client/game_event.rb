@@ -1,5 +1,5 @@
 class GameEvent
-  attr_reader :type, :buttons, :x, :y, :pos, :timeout, :message
+  attr_reader :type, :x, :y, :pos, :message, :buttons, :timeout
   
   def self.fromEvent(ev)
     type = ev.class.name.gsub("Rubygame::Events::", "").to_sym
@@ -46,12 +46,14 @@ class ListEvents
   include Singleton
   
   def initialize
-    @list = []
+    @list = [] # lista effettiva di mie eventi
     @mutex = Mutex.new
+    @next_event = nil # per ottimizzare
   end
   
   def have_event?
-    return (check_event != nil)
+    @next_event = check_event
+    return (@next_event != nil)
   end
   
   def add_event(game_event)
@@ -61,26 +63,25 @@ class ListEvents
   end
   
   def check_event
-    game_event = nil
     @mutex.synchronize do
-      @list.each do |e|
-        if (Time.now.to_i - e.timeout >= 0)
-          game_event = e
-          break
+      @list.each do |event|
+        if (Time.now.to_i - event.timeout >= 0)
+          return event
         end
       end
     end
-    return game_event
+    return nil
   end
   
   def get_event
-    game_event = check_event
-    if game_event
+    event = (@next_event) ? @next_event : check_event
+    @next_event = nil
+    if event
       @mutex.synchronize do
-        @list.delete(game_event)
+        @list.delete(event)
       end
     end
-    return game_event
+    return event
   end
   
   private :check_event

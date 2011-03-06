@@ -20,7 +20,7 @@ class Game
     @ev_raw.enable_new_style_events
     
     @clock = Rubygame::Clock.new
-    @clock.target_framerate = 60
+    @clock.target_framerate = 30
     @clock.enable_tick_events
     
     @list_events = ListEvents.instance
@@ -37,6 +37,7 @@ class Game
   def update
     seconds_passed = @clock.tick.seconds
     
+    # aggiunta eventi alla lista
     @ev_raw.each do |event|
       case event
       when Rubygame::Events::QuitRequested
@@ -53,16 +54,16 @@ class Game
       end
     end
     
-    @sprites.undraw(@screen, @background)
-    
+    # spippolamento lista
     if @list_events.have_event?
-      ev = @list_events.get_event
-      if ev.type == :MousePressed
-        # @player.move(ev.pos)
-        # mettere gli eventi di Move al posto di questo
+      event = @list_events.get_event
+      p event
+      if event.type == :MousePressed
+        @player.move(event.pos)
       end
     end
     
+    @sprites.undraw(@screen, @background)
     @sprites.update(seconds_passed)
     @sprites.draw(@screen)
     @screen.flip

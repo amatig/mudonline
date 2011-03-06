@@ -1,15 +1,36 @@
 class IRCConnection
   
-  # Ridefinizione del metodo loop della lib Ruby-IRC.
-  def IRCConnection.main
-    while (@@quit == 0)
-      do_one_loop { |event| yield event }
-      # tick per aggiorn. gragica e condizione per uscire
-      gm = Game.instance
-      unless gm.update
-        gm.quit
-        IRCConnection.quit
+  def IRCConnection.do_one_loop
+    read_sockets = select(@@readsockets, nil, nil, 0.03) # cambiati i secondi di sleep
+    if !read_sockets.nil?
+      read_sockets[0].each {|sock|
+        if sock.eof? && sock == @@socket
+          remove_IO_socket(sock)
+          sleep 10
+          handle_connection(@server, @port, @nick, @realname)
+        else
+          yield @@events[sock.object_id.to_i].call(sock)
+        end
+      }
+    end
+    if @@output_buffer.length > 0
+      timer = Time.now.to_f
+      if (timer > @@last_send + @@message_delay) 
+        message = @@output_buffer.shift()
+        if !message.nil?
+          IRCConnection.send_to_server(message)
+          @@last_send = timer
+        end
       end
+    end
+    IRCConnection.update_game
+  end
+  
+  def IRCConnection.update_game
+    gm = Game.instance
+    unless gm.update
+      gm.quit
+      IRCConnection.quit
     end
   end
   
