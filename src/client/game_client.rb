@@ -1,7 +1,7 @@
 class IRCConnection
   
   def IRCConnection.do_one_loop
-    read_sockets = select(@@readsockets, nil, nil, 0.03) # cambiati i secondi di sleep
+    read_sockets = select(@@readsockets, nil, nil, 0.02) # cambiati i secondi di sleep
     if !read_sockets.nil?
       read_sockets[0].each {|sock|
         if sock.eof? && sock == @@socket
@@ -23,10 +23,10 @@ class IRCConnection
         end
       end
     end
-    IRCConnection.update_game
+    IRCConnection.do_update_game
   end
   
-  def IRCConnection.update_game
+  def IRCConnection.do_update_game
     gm = Game.instance
     unless gm.update
       gm.quit

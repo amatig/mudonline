@@ -30,7 +30,7 @@ class Game
     
     @sprites = Rubygame::Sprites::Group.new
     Rubygame::Sprites::UpdateGroup.extend_object(@sprites)
-    @player = GameSprite.new
+    @player = GameSprite.new("mario")
     @sprites << @player
   end
   

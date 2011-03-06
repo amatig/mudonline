@@ -13,9 +13,10 @@ class GameEvent
     message = ""
     buttons = []
     if ev.respond_to?("button")
-      buttons = [ev.button]
-    elsif (ev.respond_to?("buttons") and !ev.buttons.empty?)
-      buttons = ev.buttons
+      buttons << ev.button
+    end
+    if (ev.respond_to?("buttons") and !ev.buttons.empty?)
+      buttons.concat(ev.buttons)
     end
     if ev.respond_to?("key")
       buttons << ev.key
